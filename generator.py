@@ -59,7 +59,7 @@ def getRatingAndPropensityMatrix(inv_scale=2):
         P[mask & rating_high_ind] = np.power(
             alpha, 5 - rating_matrix[mask & rating_high_ind])
         # scale in such a way that the mean is target_mean
-        # but keep all value in [0, 1]:
+        # but keep all values in [0, 1]:
         while abs(np.mean(P[mask]) - target_mean) > 1e-5:
             P[mask] *= 1/np.mean(P[mask]) * target_mean
             P[P > 1] = 1
