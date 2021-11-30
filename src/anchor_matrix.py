@@ -128,12 +128,17 @@ def biclique_find(M, printStatus=False):
     return bicliques[bestInd]
 
 
-def anchor_sub_matrix(D, i, j, biclique_search=biclique_find):
+def anchor_sub_matrix(D, i, j, biclique_search=biclique_find, _retry=5):
     NC = np.where(D[i, :])[0]
     NR = np.where(D[:, j])[0]
     B = D[np.ix_(NR, NC)]
     ind_NR, ind_NC = biclique_search(B)
     ind_row, ind_col = NR[ind_NR], NC[ind_NC]
+
+    if len(ind_row) == 0 or len(ind_col) == 0:
+        if _retry <= 0:
+            raise Exception("Did not find anchor matrix!")
+        return anchor_sub_matrix(D, i, j, biclique_search=biclique_find, _retry=_retry-1)
 
     assert(np.all(D[ind_row, j]))
     assert(np.all(D[i, ind_col]))

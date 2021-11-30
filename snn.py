@@ -3,6 +3,8 @@ Synthetic Nearest Neighbors algorithm
 
 ATTRIBUTION: https://github.com/deshen24/syntheticNN
 
+CURRENTLY NOT USED!
+
 """
 import sys
 import warnings
