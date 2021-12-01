@@ -1,4 +1,4 @@
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, Lasso
 import numpy as np
 
 """
@@ -66,9 +66,27 @@ class RidgeEstimator(BaseEstimator):
         self.reg_alpha = reg_alpha
 
     def predict(self, S, x, q):
-        alpha = self.reg_alpha(len(q.flatten())) if callable(
+        (m, n) = S.shape
+        alpha = self.reg_alpha(m/n) if callable(
             self.reg_alpha) else self.reg_alpha
         model = Ridge(alpha=alpha)
+        model.fit(S.T, q)
+        est = model.predict(x.reshape(1, -1))
+        return est
+
+class LassoEstimator(BaseEstimator):
+    def __init__(self, reg_alpha=lambda sz: sz*0.01):
+        """
+        reg_alpha: float or function (size:number -> float),
+                    regularization strength for the LASSO regression.
+        """
+        self.reg_alpha = reg_alpha
+
+    def predict(self, S, x, q):
+        (m, n) = S.shape
+        alpha = self.reg_alpha(m/n) if callable(
+            self.reg_alpha) else self.reg_alpha
+        model = Lasso(alpha=alpha)
         model.fit(S.T, q)
         est = model.predict(x.reshape(1, -1))
         return est
