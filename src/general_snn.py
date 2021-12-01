@@ -31,12 +31,14 @@ def general_snn(
     '''
     A = Y.copy()
     for i in range(A.shape[0]):
+        if print_progress:
+            print("\r", f'{i}/{A.shape[0]}', end="")
         for j in range(A.shape[1]):
             if not D[i, j]:
                 A[i, j] = general_snn_ij(
                     D, Y, i, j, num_estimates, biclique_search, estimator)
-        if print_progress:
-            print(f'{i}/{A.shape[0]}')
+    if print_progress:
+        print()
 
     # clipping
     if min_val is not None:

@@ -49,6 +49,7 @@ class SNNEstimator(BaseEstimator):
         u, s, v = np.linalg.svd(S, full_matrices=False)
         # keep at least one singular value
         rank = max(1, self.calc_rank(s, *S.shape))
+        rank = min(rank, len(s))
         svd_inv_T = np.sum([1/s[l] * u[:, [l]] * v[[l], :]
                             for l in range(rank)], axis=0)
         beta = svd_inv_T @ q.reshape(-1, 1)
