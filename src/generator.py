@@ -69,7 +69,10 @@ def getRatingAndPropensityMatrix(inv_scale=1, alpha=0.01, r=5, seed=0):
     return rating_matrix, P
 
 
-def getRatingAndPropensityMatrix_general(latent_movie_matrix=None, inv_scale=1, alpha=0.01, r=5, seed=0):
+def getRatingAndPropensityMatrix_general(latent_movie_matrix=None, inv_scale=1, alpha=0.01, r=5, seed=None):
+    """
+    If a latent_movie_matrix is given, only the latent user matrix is generated.
+    """
     rng = np.random.default_rng(seed)
     num_users = int(80/inv_scale)  # m
     num_movies = int(80/inv_scale)  # n
