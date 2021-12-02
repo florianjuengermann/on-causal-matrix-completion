@@ -80,7 +80,7 @@ class RidgeEstimator(BaseEstimator):
 
 
 class LassoEstimator(BaseEstimator):
-    def __init__(self, reg_alpha=lambda sz: sz*0.01):
+    def __init__(self, reg_alpha=lambda sz, ratio: sz*0.01):
         """
         reg_alpha: float or function (size:number -> float),
                     regularization strength for the LASSO regression.
@@ -89,9 +89,9 @@ class LassoEstimator(BaseEstimator):
 
     def predict(self, S, x, q, ind_row, ind_col):
         (m, n) = S.shape
-        alpha = self.reg_alpha(m/n) if callable(
+        alpha = self.reg_alpha(q.size, m/n) if callable(
             self.reg_alpha) else self.reg_alpha
-        model = Lasso(alpha=alpha)
+        model = Lasso(alpha=alpha, normalize=True, tol=1e-2)
         model.fit(S.T, q)
         est = model.predict(x.reshape(1, -1))
         return est
