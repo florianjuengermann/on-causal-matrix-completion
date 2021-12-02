@@ -98,40 +98,51 @@ class LassoEstimator(BaseEstimator):
 
 
 class GapEstimator(BaseEstimator):
-    def __init__(self, avg_method="row", estimator=RidgeEstimator()):
+    def __init__(self, estimator=RidgeEstimator(), avg_method="row", avg_base="submatrix"):
         """
         Can predict a value with non-complete submatrix S.
         For that, it fills missing values in S with row or column averages.
         M: complete matrix,
         D: binary matrix indicating missing values.
+        estimator: estimator to use after imputing missing values.
         avg_method: how to impute missing values. Available options:
             "row", "column"
-        estimator: estimator to use after imputing missing values.
+        avg_base: how to impute missing values in the submatrix. Available options:
+            "submatrix": use row/column averages of only the the submatrix.
+            "complete": use the row/column averages of the entire matrix.
         """
         self.estimator = estimator
         self.avg_method = avg_method
+        self.avg_base = avg_base
 
-    def prepare(self, M, D):
+    def _impute_missing_values(self, M):
         M_complete = M.copy()
-        # fill missing values with row/column averages
         if self.avg_method == "row":
             for row in range(M.shape[0]):
-                row_avg = np.mean(M[row, :][D[row, :] == 1])
-                M_complete[row, :][D[row, :] == 0] = row_avg
+                row_avg = np.mean(M[row, :][np.isfinite(M[row, :])])
+                M_complete[row, :][np.isnan(M[row, :])] = row_avg
         elif self.avg_method == "column":
             for col in range(M.shape[1]):
-                col_avg = np.mean(M[:, col][D[:, col] == 1])
-                M_complete[:, col][D[:, col] == 0] = col_avg
+                col_avg = np.mean(M[:, col][np.isfinite(M[:, col])])
+                M_complete[:, col][np.isnan(M[:, col])] = col_avg
         else:
             raise ValueError(
                 "avg_method must be one of 'row', 'column'")
         assert(np.all(np.isfinite(M_complete)))
-        self.M_complete = M_complete
+        return M_complete
+
+    def prepare(self, M, D):
+        if self.avg_base == "complete":
+            # calculate row/column averages for the entire matrix
+            self.M_complete = self._impute_missing_values(M)
 
     def predict(self, S, x, q, ind_row, ind_col):
         # S is may not be complete, so we need to fill missing values
-        S_complete = S.copy()
-        mask = np.isnan(S)
-        S_complete[mask] = self.M_complete[np.ix_(ind_row, ind_col)][mask]
+        if self.avg_base == "submatrix":  # impute missing values with submatrix only
+            S_complete = self._impute_missing_values(S)
+        elif self.avg_base == "complete":  # impute missing values with avgs from entire matrix
+            S_complete = S.copy()
+            mask = np.isnan(S)
+            S_complete[mask] = self.M_complete[np.ix_(ind_row, ind_col)][mask]
         assert(np.all(np.isfinite(S_complete)))
         return self.estimator.predict(S_complete, x, q, ind_row, ind_col)

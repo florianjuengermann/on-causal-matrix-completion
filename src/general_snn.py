@@ -35,7 +35,7 @@ def general_snn_multi_est(
     A = np.repeat(Y[:, :, np.newaxis], len(estimators), axis=2)
     for i in range(A.shape[0]):
         if print_progress:
-            print("\r", f'{i}/{A.shape[0]}', end="")
+            print("\r", f'{i+1}/{A.shape[0]}', end="")
         for j in range(A.shape[1]):
             if not D[i, j]:
                 A[i, j] = general_snn_multi_est_ij(
@@ -65,6 +65,8 @@ def general_snn(
     '''
     D: boolean matrix (shape (N, M)), True if value Y[i,j] is observed
     Y: float matrix (shape (N, M))
+    num_estimates: use this if the biclique search is non-deterministic
+    min_val, max_val: clipping the results 
     '''
     A_3d = general_snn_multi_est(D, Y, [estimator], biclique_search,
                                  num_estimates, min_val, max_val, print_progress)
