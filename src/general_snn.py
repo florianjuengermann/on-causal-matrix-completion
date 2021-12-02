@@ -10,7 +10,7 @@ def general_snn_ij(D, Y, i, j, num_estimates, biclique_search, estimator: BaseEs
             D, i, j, biclique_search=biclique_search)
         x, q = Y[ind_row, j], Y[i, ind_col]
         S = Y[np.ix_(ind_row, ind_col)]  # create submatrix
-        est = estimator.predict(S, x, q)
+        est = estimator.predict(S, x, q, ind_row, ind_col)
         estimates.append(est)
     return np.mean(estimates)
 
@@ -32,7 +32,7 @@ def general_snn(
     A = Y.copy()
     for i in range(A.shape[0]):
         if print_progress:
-            print("\r", f'{i}/{A.shape[0]}', end="")
+            print("\r", f'{i+1}/{A.shape[0]}', end="")
         for j in range(A.shape[1]):
             if not D[i, j]:
                 A[i, j] = general_snn_ij(

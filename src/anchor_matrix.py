@@ -4,7 +4,7 @@ import networkx as nx
 from networkx.algorithms.clique import find_cliques, find_cliques_recursive
 
 
-def biclique_find_(E, L, R, P, Q):
+def _biclique_find_(E, L, R, P, Q):
     bicliques = []
     P_disabled = set()
     for i in range(len(P)):
@@ -41,7 +41,8 @@ def biclique_find_(E, L, R, P, Q):
             if len(P_new) > 0:
                 P_new = sorted([(c, x)
                                 for c, x in P_new if not x in P_disabled])
-                bicliques.extend(biclique_find_(E, L_new, R_new, P_new, Q_new))
+                bicliques.extend(_biclique_find_(
+                    E, L_new, R_new, P_new, Q_new))
         Q = Q + C
         for c in C:
             P_disabled.add(c)
@@ -50,7 +51,7 @@ def biclique_find_(E, L, R, P, Q):
     return bicliques
 
 
-def biclique_find_opt(adj, L, R, P, Q):
+def _biclique_find_opt(adj, L, R, P, Q):
     bicliques = []
     P_disabled = set()
     while len(P) > 0:
@@ -90,7 +91,7 @@ def biclique_find_opt(adj, L, R, P, Q):
             if len(P_new) > 0:
                 #P_new = sorted(P_new)
                 heapq.heapify(P_new)
-                bicliques.extend(biclique_find_opt(
+                bicliques.extend(_biclique_find_opt(
                     adj, L_new, R_new, P_new, Q_new))
         Q.extend(C)
         for c in C:
@@ -98,7 +99,7 @@ def biclique_find_opt(adj, L, R, P, Q):
     return bicliques
 
 
-def biclique_find_all(M):
+def _biclique_find_all(M):
     R_all = list(range(M.shape[0]))
     C_all = list(range(M.shape[1]))
     # first argument is only for the ordering
@@ -106,7 +107,7 @@ def biclique_find_all(M):
     heapq.heapify(P_init)
     # P_init = sorted(P_init)  # sort to improve efficiency
     adj = [{u for u in R_all if M[u][v]} for v in C_all]
-    bicliques = biclique_find_opt(adj, set(R_all), [], P_init, [])
+    bicliques = _biclique_find_opt(adj, set(R_all), [], P_init, [])
     return bicliques
 
 
@@ -120,7 +121,7 @@ def biclique_find(M, printStatus=False):
     Zhang et. al. '14:
     https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-15-110
     '''
-    bicliques = biclique_find_all(M)
+    bicliques = list(_biclique_find_all_networkx(M))
     if printStatus:
         print(f"found {len(bicliques)} bicliques")
     smallerSize = [min(len(R), len(C)) for R, C in bicliques]
@@ -129,8 +130,8 @@ def biclique_find(M, printStatus=False):
 
 
 def anchor_sub_matrix(D, i, j, biclique_search=biclique_find, _retry=5):
-    NC = np.where(D[i, :])[0]
-    NR = np.where(D[:, j])[0]
+    NC = np.where(D[i, :] == 1)[0]
+    NR = np.where(D[:, j] == 1)[0]
     B = D[np.ix_(NR, NC)]
     ind_NR, ind_NC = biclique_search(B)
     ind_row, ind_col = NR[ind_NR], NC[ind_NC]
@@ -140,14 +141,10 @@ def anchor_sub_matrix(D, i, j, biclique_search=biclique_find, _retry=5):
             raise Exception("Did not find anchor matrix!")
         return anchor_sub_matrix(D, i, j, biclique_search=biclique_find, _retry=_retry-1)
 
-    assert(np.all(D[ind_row, j]))
-    assert(np.all(D[i, ind_col]))
-    assert(np.all(D[np.ix_(ind_row, ind_col)]))
-
     return ind_row, ind_col
 
 
-def biclique_find_all_networkx(B):
+def _biclique_find_all_networkx(B):
     (n_rows, n_cols) = B.shape
     A = np.block([[np.ones((n_rows, n_rows)), B],
                   [B.T, np.ones((n_cols, n_cols))]])
@@ -174,6 +171,10 @@ def biclique_random(B):
     perm_cols = np.random.permutation(np.arange(n_cols))
     #B_copy = B.copy()
     B_copy = B[np.ix_(perm_row, perm_cols)]
-    cliques = biclique_find_all_networkx(B_copy)
+    cliques = _biclique_find_all_networkx(B_copy)
     ind_row, ind_col = next(cliques)
     return perm_row[ind_row], perm_cols[ind_col]
+
+
+def whole_matrix(B):
+    return np.arange(B.shape[0]), np.arange(B.shape[1])
