@@ -1,15 +1,15 @@
 import numpy as np
 
 
-def getRatingAndPropensityMatrix(inv_scale=2):
+def getRatingAndPropensityMatrix(inv_scale=2, alpha=0.01, r=5):
     num_users = 80//inv_scale  # m
     num_movies = 80//inv_scale  # n
-    latent_dim = 5//inv_scale  # r
+    latent_dim = r//inv_scale  # r
     num_core_users = 20//inv_scale  # m_core
     num_core_movies = 20//inv_scale  # n_core
     # users
     core_user_matrix = np.random.normal(size=(num_core_users, latent_dim))
-    dirichlet_alphas = [0.01]*num_core_users
+    dirichlet_alphas = [alpha]*num_core_users
     B_transform_matrix = np.random.dirichlet(
         dirichlet_alphas, size=num_users-num_core_users)
     # is a linear combination of core users
@@ -68,10 +68,10 @@ def getRatingAndPropensityMatrix(inv_scale=2):
     return rating_matrix, P
 
 
-def getRatingAndPropensityMatrix_general(latent_movie_matrix=None, inv_scale=2):
+def getRatingAndPropensityMatrix_general(latent_movie_matrix=None, inv_scale=2, alpha=0.01, r=5):
     num_users = 80//inv_scale  # m
     num_movies = 80//inv_scale  # n
-    latent_dim = 5  # r
+    latent_dim = r//inv_scale  # r
     num_core_movies = 30//inv_scale  # n_core
 
     # users
@@ -81,7 +81,7 @@ def getRatingAndPropensityMatrix_general(latent_movie_matrix=None, inv_scale=2):
     if latent_movie_matrix is None:
         core_movie_matrix = np.random.normal(
             size=(num_core_movies, latent_dim))
-        dirichlet_alphas = [0.01]*num_core_movies
+        dirichlet_alphas = [alpha]*num_core_movies
         B_transform_matrix = np.random.dirichlet(
             dirichlet_alphas, size=num_movies-num_core_movies)
         # is a linear combination of core movies
