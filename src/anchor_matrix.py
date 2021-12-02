@@ -4,53 +4,6 @@ import networkx as nx
 from networkx.algorithms.clique import find_cliques, find_cliques_recursive
 
 
-def _biclique_find_(E, L, R, P, Q):
-    bicliques = []
-    P_disabled = set()
-    for i in range(len(P)):
-        _, x = P[i]
-        if x in P_disabled:
-            continue
-        R_new = R.copy()
-        R_new.append(x)
-        L_new = [u for u in L if E[u][x]]
-        C = [x]
-        P_new, Q_new = [], []
-        is_max = True
-        for v in Q:
-            N = [u for u in L_new if E[u][v]]
-            if len(N) == len(L_new):
-                is_max = False
-                break
-            elif len(N) > 0:
-                Q_new.append(v)
-
-        if is_max:
-            for _, v in P:
-                if v == x or v in P_disabled:
-                    continue
-                N = [u for u in L_new if E[u][v]]
-                if len(N) == len(L_new):
-                    R_new.append(v)
-                    S = [u for u in L if not E[u][x] and E[u][v]]
-                    if len(S) == 0:
-                        C.append(v)
-                elif len(N) > 0:
-                    P_new.append((len(N), v))
-            bicliques.append((L_new.copy(), R_new.copy()))
-            if len(P_new) > 0:
-                P_new = sorted([(c, x)
-                                for c, x in P_new if not x in P_disabled])
-                bicliques.extend(_biclique_find_(
-                    E, L_new, R_new, P_new, Q_new))
-        Q = Q + C
-        for c in C:
-            P_disabled.add(c)
-    if len(bicliques) >= 100:
-        print(f"returning {len(bicliques)}")
-    return bicliques
-
-
 def _biclique_find_opt(adj, L, R, P, Q):
     bicliques = []
     P_disabled = set()
@@ -100,6 +53,11 @@ def _biclique_find_opt(adj, L, R, P, Q):
 
 
 def _biclique_find_all(M):
+    """
+    Uses the maximal biclique interation algorithm from
+    Zhang et. al. '14:
+    https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-15-110
+    """
     R_all = list(range(M.shape[0]))
     C_all = list(range(M.shape[1]))
     # first argument is only for the ordering
@@ -116,10 +74,6 @@ def biclique_find(M, printStatus=False):
     Given a boolean adjacency matrix M,
     finds a maximal set of row and column indices R, C
     such that M[i][j] = True for all i∈R, j∈C.
-
-    Uses the maximal biclique interation algorithm from
-    Zhang et. al. '14:
-    https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-15-110
     '''
     bicliques = list(_biclique_find_all_networkx(M))
     if printStatus:
@@ -166,6 +120,13 @@ def _biclique_find_all_networkx(B):
 
 
 def biclique_random(B):
+    """
+    Given a boolean adjacency matrix B,
+    finds a maximal set of row and column indices R, C
+    such that B[i][j] = True for all i∈R, j∈C.
+
+    There may be many such maximal solutions. This method returns one of them.
+    """
     (n_rows, n_cols) = B.shape
     perm_row = np.random.permutation(np.arange(n_rows))
     perm_cols = np.random.permutation(np.arange(n_cols))
